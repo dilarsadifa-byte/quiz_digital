@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LIBRARY DIGITAL QUIZ - Manajemen dan Digitalisasi Perpustakaan</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts Inter & Plus Jakarta Sans -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Canvas Confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        navy: {
+                            DEFAULT: '#0A192F',
+                            dark: '#020C1B',
+                            light: '#1E3A8A',
+                            card: '#112240'
+                        },
+                        tosca: {
+                            DEFAULT: '#0D9488',
+                            light: '#14B8A6',
+                            bright: '#2DD4BF',
+                            dark: '#0F766E'
+                        },
+                        purpleAksen: {
+                            DEFAULT: '#7C3AED',
+                            bright: '#8B5CF6',
+                            glow: 'rgba(124, 58, 237, 0.4)'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Plus Jakarta Sans', 'Inter', 'sans-serif'],
+                    },
+                    boxShadow: {
+                        'glow-tosca': '0 0 25px rgba(20, 184, 166, 0.35)',
+                        'glow-purple': '0 0 25px rgba(124, 58, 237, 0.35)',
+                        'card-glass': '0 20px 40px -15px rgba(2, 12, 27, 0.7)',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #0A192F;
+            color: #F3F4F6;
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(13, 148, 136, 0.15) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, rgba(124, 58, 237, 0.15) 0%, transparent 40%),
+                radial-gradient(circle at 50% 50%, rgba(30, 58, 138, 0.1) 0%, transparent 60%);
+            background-attachment: fixed;
+            min-height: 100vh;
+        }
+
+        .glass-card {
+            background: rgba(17, 34, 64, 0.75);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .glass-card-interactive {
+            background: rgba(23, 42, 77, 0.6);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .glass-card-interactive:hover {
+            border-color: rgba(20, 184, 166, 0.5);
+            transform: translateY(-2px);
+            background: rgba(27, 50, 92, 0.8);
+            box-shadow: 0 10px 25px -5px rgba(13, 148, 136, 0.2);
+        }
+
+        /* Transition Animations */
+        .page-fade-in {
+            animation: fadeIn 0.4s ease-out forwards;
+        }
+
+        .slide-up {
+            animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.98); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(18px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Option Button States */
+        .option-btn {
+            transition: all 0.2s ease;
+        }
+
+        .option-btn.selected {
+            border-color: #8B5CF6 !important;
+            background: rgba(124, 58, 237, 0.18) !important;
+            box-shadow: 0 0 15px rgba(139, 92, 246, 0.3);
+        }
+
+        .option-btn.correct {
+            border-color: #10B981 !important;
+            background: rgba(16, 185, 129, 0.2) !important;
+            color: #6EE7B7 !important;
+            box-shadow: 0 0 15px rgba(16, 185, 129, 0.3);
+        }
+
+        .option-btn.wrong {
+            border-color: #EF4444 !important;
+            background: rgba(239, 68, 68, 0.2) !important;
+            color: #FCA5A5 !important;
+            box-shadow: 0 0 15px rgba(239, 68, 68, 0.3);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(10, 25, 47, 0.8);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(20, 184, 166, 0.4);
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(20, 184, 166, 0.7);
+        }
+    </style>
+</head>
+<body class="flex flex-col min-h-screen text-slate-100 antialiased selection:bg-tosca selection:text-navy">
+
+    <!-- TOP HEADER / NAV BAR -->
+    <header class="w-full border-b border-slate-800/80 bg-navy/80 backdrop-blur-md sticky top-0 z-40">
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 py-3.5 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-tosca-dark via-tosca to-purpleAksen flex items-center justify-center shadow-glow-tosca">
+                    <i class="fa-solid fa-book-bookmark text-white text-lg"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-base sm:text-lg text-white leading-tight flex items-center gap-2">
+                        LIBRARY DIGITAL QUIZ
+                        <span class="hidden sm:inline-block text-[10px] uppercase font-semibold bg-tosca/20 text-tosca-bright border border-tosca/30 px-2 py-0.5 rounded-full">Akademik</span>
+                    </h1>
+                    <p class="text-xs text-slate-400">Manajemen & Digitalisasi Perpustakaan</p>
+                </div>
+            </div>
+            <div id="participantBadge" class="hidden items-center gap-2 bg-slate-800/80 border border-slate-700/60 px-3 py-1.5 rounded-full text-xs text-slate-300">
+                <i class="fa-solid fa-user-graduate text-tosca-bright"></i>
+                <span id="headerParticipantName" class="font-medium text-white">Peserta</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN CONTENT CONTAINER AREA -->
+    <main class="flex-grow flex items-center justify-center p-4 sm:p-6 md:p-8">
+        <div class="w-full max-w-4xl mx-auto">
+
+            <!-- ================= PAGE 1: START / LANDING ================= -->
+            <section id="startPage" class="page-fade-in glass-card rounded-3xl p-6 sm:p-10 shadow-card-glass relative overflow-hidden">
+                <!-- Background Decorative Glows -->
+                <div class="absolute -top-20 -right-20 w-64 h-64 bg-purpleAksen/20 rounded-full blur-3xl pointer-events-none"></div>
+                <div class="absolute -bottom-20 -left-20 w-64 h-64 bg-tosca/20 rounded-full blur-3xl pointer-events-none"></div>
+
+                <div class="relative z-10 text-center max-w-2xl mx-auto">
+                    <!-- Icon Banner -->
+                    <div class="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-gradient-to-br from-navy-light via-tosca-dark to-purpleAksen p-0.5 shadow-glow-purple mb-6">
+                        <div class="w-full h-full bg-navy rounded-[14px] flex items-center justify-center">
+                            <i class="fa-solid fa-laptop-code text-3xl text-transparent bg-clip-text bg-gradient-to-r from-tosca-bright to-purpleAksen-bright"></i>
+                        </div>
+                    </div>
+
+                    <!-- Titles -->
+                    <h2 class="text-2xl sm:text-4xl font-extrabold text-white tracking-tight mb-2">
+                        LIBRARY DIGITAL QUIZ
+                    </h2>
+                    <p class="text-base sm:text-xl font-semibold text-transparent bg-clip-text bg-gradient-to-r from-tosca-bright via-teal-200 to-purpleAksen-bright mb-4">
+                        Manajemen dan Digitalisasi Perpustakaan
+                    </p>
+
+                    <p class="text-sm sm:text-base text-slate-300 leading-relaxed mb-8">
+                        Uji pemahamanmu tentang pengelolaan perpustakaan, klasifikasi koleksi (DDC), metadata digital (DCMES), serta pembuatan website informasi digital berbasis Google Sites.
+                    </p>
+
+                    <!-- Info Badges -->
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-8">
+                        <div class="glass-card-interactive p-3 rounded-2xl flex items-center justify-center gap-2.5">
+                            <i class="fa-solid fa-list-check text-tosca-bright text-base"></i>
+                            <span class="text-xs font-semibold text-slate-200">10 Soal Pilihan Ganda</span>
+                        </div>
+                        <div class="glass-card-interactive p-3 rounded-2xl flex items-center justify-center gap-2.5">
+                            <i class="fa-solid fa-award text-purpleAksen-bright text-base"></i>
+                            <span class="text-xs font-semibold text-slate-200">Skor Maksimal 100</span>
+                        </div>
+                        <div class="glass-card-interactive p-3 rounded-2xl flex items-center justify-center gap-2.5">
+                            <i class="fa-solid fa-clock text-blue-400 text-base"></i>
+                            <span class="text-xs font-semibold text-slate-200">Evaluasi Langsung</span>
+                        </div>
+                    </div>
+
+                    <!-- Input Form -->
+                    <div class="bg-navy-dark/60 border border-slate-700/80 rounded-2xl p-5 mb-8 text-left shadow-inner">
+                        <label for="inputName" class="block text-xs font-bold uppercase tracking-wider text-tosca-bright mb-2">
+                            <i class="fa-solid fa-id-card mr-1"></i> Nama Lengkap Mahasiswa / Peserta <span class="text-red-400">*</span>
+                        </label>
+                        <input type="text" id="inputName" placeholder="Masukkan nama Anda untuk sertifikat kuis..." 
+                            class="w-full bg-navy/90 border border-slate-600 focus:border-tosca focus:ring-2 focus:ring-tosca/40 rounded-xl px-4 py-3 text-sm text-white placeholder-slate-500 outline-none transition">
+                        <p id="nameError" class="hidden text-xs text-red-400 mt-2 flex items-center gap-1">
+                            <i class="fa-solid fa-circle-exclamation"></i> Silakan isi nama Anda terlebih dahulu sebelum memulai kuis.
+                        </p>
+                    </div>
+
+                    <!-- Start Button -->
+                    <button id="btnStart" onclick="startQuiz()" 
+                        class="w-full sm:w-auto px-10 py-4 bg-gradient-to-r from-tosca via-teal-600 to-purpleAksen hover:from-tosca-bright hover:to-purpleAksen-bright text-white font-bold rounded-2xl shadow-glow-tosca hover:shadow-glow-purple transition-all duration-300 transform hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center gap-3 text-base mx-auto">
+                        <span>MULAI KUIS SEKARANG</span>
+                        <i class="fa-solid fa-arrow-right"></i>
+                    </button>
+                </div>
+            </section>
+
+            <!-- ================= PAGE 2: QUIZ INTERACTION ================= -->
+            <section id="quizPage" class="hidden page-fade-in glass-card rounded-3xl p-5 sm:p-8 shadow-card-glass">
+                <!-- Top Progress Bar Header -->
+                <div class="mb-6">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
+                        <div class="flex items-center gap-2">
+                            <span class="bg-tosca/20 border border-tosca/40 text-tosca-bright text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1.5">
+                                <i class="fa-solid fa-layer-group text-xs"></i>
+                                <span id="questionCategory">Kategori</span>
+                            </span>
+                            <span id="questionIndicator" class="text-xs sm:text-sm font-semibold text-slate-300">
+                                Soal <strong class="text-white" id="currentQNum">1</strong> dari 10
+                            </span>
+                        </div>
+                        <div class="text-xs text-slate-400 flex items-center gap-2">
+                            <span>Skor Sementara:</span>
+                            <span id="currentScoreBadge" class="font-bold text-sm text-tosca-bright bg-navy-dark px-2.5 py-0.5 rounded-lg border border-slate-700">0</span>
+                        </div>
+                    </div>
+
+                    <!-- Animated Progress Bar -->
+                    <div class="w-full h-3 bg-navy-dark rounded-full overflow-hidden p-0.5 border border-slate-800">
+                        <div id="progressBar" class="h-full bg-gradient-to-r from-tosca via-teal-400 to-purpleAksen rounded-full transition-all duration-500 ease-out" style="width: 10%;"></div>
+                    </div>
+                </div>
+
+                <!-- Question Card Container -->
+                <div id="questionContainer" class="slide-up">
+                    <div class="bg-navy-dark/50 border border-slate-700/60 rounded-2xl p-5 sm:p-6 mb-6">
+                        <h3 id="questionText" class="text-base sm:text-xl font-bold text-white leading-relaxed">
+                            Loading pertanyaan...
+                        </h3>
+                    </div>
+
+                    <!-- Answer Options Grid -->
+                    <div id="optionsContainer" class="grid grid-cols-1 gap-3 mb-6">
+                        <!-- Options generated dynamically by JS -->
+                    </div>
+
+                    <!-- Feedback Explanation Box (Hidden initially) -->
+                    <div id="feedbackBox" class="hidden rounded-2xl p-4 sm:p-5 mb-6 border transition-all duration-300">
+                        <div class="flex items-start gap-3">
+                            <div id="feedbackIcon" class="w-8 h-8 rounded-xl flex items-center justify-center shrink-0 mt-0.5 text-lg"></div>
+                            <div>
+                                <h4 id="feedbackTitle" class="font-bold text-sm sm:text-base mb-1"></h4>
+                                <p id="feedbackText" class="text-xs sm:text-sm leading-relaxed text-slate-200"></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Navigation Controls -->
+                <div class="flex items-center justify-between pt-4 border-t border-slate-800/80">
+                    <div class="text-xs text-slate-400 hidden sm:block">
+                        <i class="fa-solid fa-lightbulb text-amber-400 mr-1"></i> Pilih satu jawaban terbaik.
+                    </div>
+                    <button id="btnNext" onclick="nextQuestion()" disabled
+                        class="w-full sm:w-auto px-7 py-3 bg-slate-800 text-slate-500 font-bold rounded-xl border border-slate-700 cursor-not-allowed transition-all duration-300 flex items-center justify-center gap-2 text-sm ml-auto">
+                        <span id="btnNextText">SOAL BERIKUTNYA</span>
+                        <i id="btnNextIcon" class="fa-solid fa-arrow-right"></i>
+                    </button>
+                </div>
+            </section>
+
+            <!-- ================= PAGE 3: RESULT PAGE ================= -->
+            <section id="resultPage" class="hidden page-fade-in glass-card rounded-3xl p-6 sm:p-10 shadow-card-glass text-center relative overflow-hidden">
+                <!-- Decorative Glows -->
+                <div class="absolute top-0 left-1/2 -translate-x-1/2 w-96 h-96 bg-tosca/10 rounded-full blur-3xl pointer-events-none"></div>
+
+                <div class="relative z-10 max-w-2xl mx-auto">
+                    <!-- Badge Header -->
+                    <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-slate-800/80 border border-slate-700 text-xs font-semibold text-tosca-bright mb-6">
+                        <i class="fa-solid fa-circle-check"></i> Kuis Selesai Dikerjakan
+                    </div>
+
+                    <h2 class="text-xl sm:text-2xl font-bold text-slate-300 mb-1">Hasil Evaluasi Pembelajaran</h2>
+                    <h3 id="resultName" class="text-2xl sm:text-4xl font-extrabold text-white mb-6">Nama Peserta</h3>
+
+                    <!-- Score Card Circle/Box -->
+                    <div class="glass-card-interactive max-w-sm mx-auto rounded-3xl p-6 mb-8 border border-slate-700/80 relative">
+                        <p class="text-xs uppercase font-bold tracking-widest text-slate-400 mb-2">SKOR AKHIR</p>
+                        <div class="flex items-baseline justify-center gap-1 my-2">
+                            <span id="finalScore" class="text-6xl sm:text-7xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-tosca-bright via-teal-200 to-purpleAksen-bright">0</span>
+                            <span class="text-2xl font-bold text-slate-500">/ 100</span>
+                        </div>
+                        <div class="w-full bg-slate-800 h-2 rounded-full my-4 overflow-hidden">
+                            <div id="resultScoreBar" class="h-full bg-gradient-to-r from-tosca to-purpleAksen rounded-full" style="width: 0%;"></div>
+                        </div>
+                        <p id="motivationText" class="text-xs sm:text-sm text-slate-300 italic font-medium leading-relaxed">
+                            Pesan motivasi akan muncul di sini.
+                        </p>
+                    </div>
+
+                    <!-- Statistics Grid -->
+                    <div class="grid grid-cols-3 gap-3 mb-8">
+                        <div class="bg-navy-dark/80 border border-slate-800 p-3 sm:p-4 rounded-2xl">
+                            <div class="text-emerald-400 text-lg font-bold flex items-center justify-center gap-1.5 mb-1">
+                                <i class="fa-solid fa-circle-check"></i> <span id="statCorrect">0</span>
+                            </div>
+                            <div class="text-[11px] sm:text-xs text-slate-400 font-semibold">Jawaban Benar</div>
+                        </div>
+                        <div class="bg-navy-dark/80 border border-slate-800 p-3 sm:p-4 rounded-2xl">
+                            <div class="text-rose-400 text-lg font-bold flex items-center justify-center gap-1.5 mb-1">
+                                <i class="fa-solid fa-circle-xmark"></i> <span id="statWrong">0</span>
+                            </div>
+                            <div class="text-[11px] sm:text-xs text-slate-400 font-semibold">Jawaban Salah</div>
+                        </div>
+                        <div class="bg-navy-dark/80 border border-slate-800 p-3 sm:p-4 rounded-2xl">
+                            <div class="text-tosca-bright text-lg font-bold flex items-center justify-center gap-1.5 mb-1">
+                                <i class="fa-solid fa-chart-pie"></i> <span id="statPercentage">0%</span>
+                            </div>
+                            <div class="text-[11px] sm:text-xs text-slate-400 font-semibold">Akurasi</div>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
+                        <button onclick="openDiscussionModal()" 
+                            class="w-full sm:w-auto px-6 py-3.5 bg-slate-800 hover:bg-slate-700 text-tosca-bright border border-tosca/40 font-bold rounded-xl transition-all flex items-center justify-center gap-2 text-sm">
+                            <i class="fa-solid fa-book-open"></i>
+                            <span>LIHAT PEMBAHASAN</span>
+                        </button>
+                        <button onclick="restartQuiz()" 
+                            class="w-full sm:w-auto px-8 py-3.5 bg-gradient-to-r from-tosca to-purpleAksen hover:from-tosca-bright hover:to-purpleAksen-bright text-white font-bold rounded-xl shadow-glow-tosca transition-all flex items-center justify-center gap-2 text-sm">
+                            <i class="fa-solid fa-rotate-right"></i>
+                            <span>ULANGI KUIS</span>
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+        </div>
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="w-full border-t border-slate-800/80 py-4 text-center text-xs text-slate-500 bg-navy-dark/60">
+        <div class="max-w-5xl mx-auto px-4">
+            <p>Dosen Pengampu: <strong>Martunis, S. Pd., M. Ed</strong> | Program Perkuliahan Manajemen & Digitalisasi Perpustakaan</p>
+        </div>
+    </footer>
+
+    <!-- ================= MODAL DISCUSSION / PEMBAHASAN ================= -->
+    <div id="discussionModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-navy-dark/80 backdrop-blur-md page-fade-in">
+        <div class="glass-card w-full max-w-3xl max-h-[85vh] rounded-3xl flex flex-col shadow-2xl border border-slate-700/80">
+            <!-- Modal Header -->
+            <div class="p-5 sm:p-6 border-b border-slate-800 flex items-center justify-between shrink-0">
+                <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 rounded-xl bg-tosca/20 text-tosca-bright flex items-center justify-center border border-tosca/30">
+                        <i class="fa-solid fa-book-open"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-lg text-white">Pembahasan Soal Kuis</h3>
+                        <p class="text-xs text-slate-400">Review jawaban dan penjelasan materi perkuliahan</p>
+                    </div>
+                </div>
+                <button onclick="closeDiscussionModal()" class="w-8 h-8 rounded-full bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center transition">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <!-- Modal Scrollable Content -->
+            <div id="discussionList" class="p-5 sm:p-6 overflow-y-auto space-y-4 flex-grow">
+                <!-- Dynamically populated discussion items -->
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="p-4 border-t border-slate-800 text-right shrink-0">
+                <button onclick="closeDiscussionModal()" class="px-6 py-2.5 bg-tosca hover:bg-tosca-bright text-white font-bold rounded-xl text-xs transition">
+                    Tutup Pembahasan
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= JAVASCRIPT LOGIC ================= -->
+    <script>
+        /* PDF Material-Based Questions Dataset (10 Accurate Questions) */
+        const quizQuestions = [
+            {
+                id: 1,
+                category: "1. Manajemen Perpustakaan",
+                question: "Manakah pernyataan di bawah ini yang paling tepat mendeskripsikan pengertian dan tujuan dari Manajemen Perpustakaan?",
+                options: [
+                    "Proses membeli buku sebanyak-banyaknya untuk memenuhi rak perpustakaan sekolah.",
+                    "Proses merencanakan, mengorganisasikan, melaksanakan, dan mengawasi seluruh sumber daya perpustakaan agar pelayanan optimal.",
+                    "Kegiatan menyalin dokumen cetak menjadi file gambar secara otomatis tanpa pengawasan.",
+                    "Upaya membatasi akses pengunjung agar koleksi buku fisik tidak cepat mengalami kerusakan."
+                ],
+                correctIndex: 1,
+                explanation: "Sesuai materi perkuliahan, manajemen perpustakaan adalah proses merencanakan, mengorganisasikan, melaksanakan, dan mengawasi sumber daya (koleksi, tenaga kerja, sarana/prasarana, anggaran) agar pelayanan berjalan optimal."
+            },
+            {
+                id: 2,
+                category: "2. Digitalisasi Perpustakaan",
+                question: "Digitalisasi perpustakaan merupakan langkah strategis dalam transformasi pelayanan. Pengertian dari digitalisasi perpustakaan adalah...",
+                options: [
+                    "Upaya menggantikan seluruh pustakawan dengan sistem kecerdasan buatan secara menyeluruh.",
+                    "Menutup layanan fisik perpustakaan dan memindahkan seluruh kegiatan ke media sosial.",
+                    "Upaya memanfaatkan teknologi informasi dan komunikasi untuk mengelola, menyimpan, serta menyediakan koleksi dan layanan dalam bentuk digital.",
+                    "Proses membeli perangkat komputer baru untuk digunakan sebagai hiasan di ruang baca."
+                ],
+                correctIndex: 2,
+                explanation: "Digitalisasi perpustakaan adalah upaya memanfaatkan TIK untuk mengelola, menyimpan, dan menyediakan koleksi serta layanan digital sehingga pemustaka dapat memperoleh informasi tanpa harus selalu datang langsung."
+            },
+            {
+                id: 3,
+                category: "3. UU SNP & Studi Kasus",
+                question: "Dalam perkuliahan, pembahasan Undang-Undang Standar Nasional Pendidikan (UU SNP) dan studi kasus perpustakaan bertujuan untuk...",
+                options: [
+                    "Menghafal pasal-pasal hukum pidana yang berkaitan dengan pencurian buku fisik.",
+                    "Memahami ketentuan/standar penyelenggaraan serta menganalisis permasalahan nyata dalam pengelolaan perpustakaan.",
+                    "Menghapus seluruh aturan lama yang berlaku di perpustakaan perguruan tinggi.",
+                    "Membuat peraturan baru mengenai denda keterlambatan pengembalian buku."
+                ],
+                correctIndex: 1,
+                explanation: "Pembahasan UU SNP dan studi kasus memberikan pemahaman mengenai standar penyelenggaraan serta melatih mahasiswa menghubungkan teori dengan masalah nyata di lingkungan perpustakaan."
+            },
+            {
+                id: 4,
+                category: "4. Pengertian DDC",
+                question: "Dewey Decimal Classification (DDC) dikembangkan pertama kali oleh Melvil Dewey pada tahun 1873. Fungsi utama dari sistem DDC ini adalah...",
+                options: [
+                    "Menentukan harga jual buku berdasarkan ketebalan dan jumlah halaman.",
+                    "Mengelompokkan bahan pustaka berdasarkan bidang ilmu/subjek agar penataan teratur dan mudah ditemukan.",
+                    "Menghitung jumlah pengunjung perpustakaan secara otomatis setiap hari.",
+                    "Menyusun buku secara ketat berdasarkan urutan alfabet nama belakang pengarang saja."
+                ],
+                correctIndex: 1,
+                explanation: "DDC dikembangkan oleh Melvil Dewey untuk mengelompokkan bahan pustaka berdasarkan bidang ilmu atau subjeknya, mengatasi kesulitan penataan urutan alfabetis agar koleksi lebih teratur dan mudah dicari."
+            },
+            {
+                id: 5,
+                category: "5. Utama DDC",
+                question: "Dalam 10 kelas utama Dewey Decimal Classification (DDC), kode klasifikasi 600 dan 500 berturut-turut mewakili bidang ilmu...",
+                options: [
+                    "600: Agama | 500: Bahasa",
+                    "600: Kesenian dan Rekreasi | 500: Sastra",
+                    "600: Teknologi dan Ilmu Terapan | 500: Ilmu Pengetahuan Alam dan Matematika",
+                    "600: Sejarah dan Geografi | 500: Filsafat dan Psikologi"
+                ],
+                correctIndex: 2,
+                explanation: "Struktur 10 Kelas Utama DDC menetapkan kelas 500 untuk Ilmu Pengetahuan Alam & Matematika, serta kelas 600 untuk Teknologi dan Ilmu Terapan."
+            },
+            {
+                id: 6,
+                category: "6. Pengertian DCMES",
+                question: "Dublin Core Metadata Element Set (DCMES) mulai dikembangkan pada tahun 1995 di Dublin, Ohio. Tujuan utama dari standar ini adalah...",
+                options: [
+                    "Mendesain tampilan fisik rak buku agar terlihat lebih modern di dalam gedung.",
+                    "Mendeskripsikan sumber informasi/digital secara sederhana dan terstruktur agar mudah ditemukan.",
+                    "Mengatur sistem penggalangan dana bagi perpustakaan umum.",
+                    "Membuat enkripsi kata sandi untuk jaringan Wi-Fi perpustakaan."
+                ],
+                correctIndex: 1,
+                explanation: "DCMES adalah standar metadata terstruktur yang digunakan untuk mendeskripsikan sumber informasi digital secara sederhana sehingga mudah dikelola dan ditemukan di internet."
+            },
+            {
+                id: 7,
+                category: "7. Elemen DCMES",
+                question: "DCMES memiliki 15 elemen inti. Elemen yang digunakan untuk mencantumkan identitas unik sumber seperti ISBN, DOI, atau URL adalah...",
+                options: [
+                    "Identifier",
+                    "Publisher",
+                    "Coverage",
+                    "Contributor"
+                ],
+                correctIndex: 0,
+                explanation: "Elemen 'Identifier' dalam 15 elemen inti DCMES berfungsi memberikan identitas unik pada sumber informasi, seperti ISBN, DOI, maupun URL."
+            },
+            {
+                id: 8,
+                category: "8. Manfaat Digitalisasi",
+                question: "Manakah di bawah ini yang merupakan salah satu manfaat utama digitalisasi dalam pengelolaan dan penelusuran koleksi bagi pemustaka?",
+                options: [
+                    "Mewajibkan pemustaka hadir fisik setiap hari untuk meminjam katalog.",
+                    "Mendukung penggunaan OPAC (Online Public Access Catalog) untuk pencarian cepat dan mandiri.",
+                    "Menghilangkan kebutuhan akan deskripsi judul dan nama pengarang.",
+                    "Membuat proses pencarian buku memakan waktu lebih lama dari sistem manual."
+                ],
+                correctIndex: 1,
+                explanation: "Digitalisasi dan penggunaan DDC/DCMES mempermudah pencarian mandiri, efisiensi waktu, serta mendukung penelusuran katalog online melalui OPAC."
+            },
+            {
+                id: 9,
+                category: "9. Fungsi Google Sites",
+                question: "Pada materi perkuliahan pertemuan 4 & 5, mahasiswa mempelajari Google Sites. Peran utama Google Sites dalam digitalisasi perpustakaan adalah...",
+                options: [
+                    "Perangkat lunak khusus untuk mengedit file video berdurasi panjang.",
+                    "Sarana untuk menyusun dan menyajikan informasi perpustakaan secara digital, rapi, dan terstruktur.",
+                    "Sistem operasi khusus yang dipasang pada server perpustakaan pusat.",
+                    "Aplikasi untuk mencetak label kartu anggota perpustakaan."
+                ],
+                correctIndex: 1,
+                explanation: "Google Sites digunakan sebagai sarana praktis bagi mahasiswa/pustakawan untuk menyusun, mengelola, dan menyajikan informasi perpustakaan secara digital dan ramah pengguna."
+            },
+            {
+                id: 10,
+                category: "10. Evaluasi Google Sites",
+                question: "Berdasarkan evaluasi proyek Google Sites pada pertemuan ke-6, kebijakan yang ditetapkan oleh dosen pengampu (Pak Martunis) adalah...",
+                options: [
+                    "Mahasiswa wajib mengulang pembuatan situs dari awal di akhir semester.",
+                    "Hasil proyek Google Sites yang berkualitas dan menarik dijadikan komponen penilaian pengganti UTS.",
+                    "Proyek Google Sites hanya dijadikan tugas opsional tanpa ada bobot nilai.",
+                    "Seluruh mahasiswa diwajibkan mengikuti ujian tertulis tambahan di kelas."
+                ],
+                correctIndex: 1,
+                explanation: "Dosen menyampaikan bahwa mahasiswa yang berhasil mengembangkan Google Sites dengan kualitas baik dan tampilan menarik tidak perlu mengikuti UTS tertulis, karena proyek tersebut menjadi komponen penilaian UTS."
+            }
+        ];
+
+        /* App State Variables */
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let correctAnswersCount = 0;
+        let wrongAnswersCount = 0;
+        let participantName = "";
+        let userAnswers = []; // Stores object: { questionId, selectedIndex, isCorrect }
+
+        /* DOM Element References */
+        const startPage = document.getElementById('startPage');
+        const quizPage = document.getElementById('quizPage');
+        const resultPage = document.getElementById('resultPage');
+        
+        const inputName = document.getElementById('inputName');
+        const nameError = document.getElementById('nameError');
+        const participantBadge = document.getElementById('participantBadge');
+        const headerParticipantName = document.getElementById('headerParticipantName');
+
+        const questionCategory = document.getElementById('questionCategory');
+        const currentQNum = document.getElementById('currentQNum');
+        const currentScoreBadge = document.getElementById('currentScoreBadge');
+        const progressBar = document.getElementById('progressBar');
+        const questionText = document.getElementById('questionText');
+        const optionsContainer = document.getElementById('optionsContainer');
+        const feedbackBox = document.getElementById('feedbackBox');
+        const feedbackIcon = document.getElementById('feedbackIcon');
+        const feedbackTitle = document.getElementById('feedbackTitle');
+        const feedbackText = document.getElementById('feedbackText');
+        const btnNext = document.getElementById('btnNext');
+        const btnNextText = document.getElementById('btnNextText');
+
+        /* Start Quiz Function */
+        function startQuiz() {
+            const nameValue = inputName.value.trim();
+            if (!nameValue) {
+                nameError.classList.remove('hidden');
+                inputName.focus();
+                return;
+            }
+
+            nameError.classList.add('hidden');
+            participantName = nameValue;
+            headerParticipantName.textContent = participantName;
+            participantBadge.classList.remove('hidden');
+            participantBadge.classList.add('flex');
+
+            // Reset States
+            currentQuestionIndex = 0;
+            score = 0;
+            correctAnswersCount = 0;
+            wrongAnswersCount = 0;
+            userAnswers = [];
+
+            // Switch View
+            startPage.classList.add('hidden');
+            resultPage.classList.add('hidden');
+            quizPage.classList.remove('hidden');
+
+            renderQuestion();
+        }
+
+        /* Render Question Function */
+        function renderQuestion() {
+            const q = quizQuestions[currentQuestionIndex];
+
+            // Reset UI States
+            feedbackBox.classList.add('hidden');
+            btnNext.disabled = true;
+            btnNext.className = "w-full sm:w-auto px-7 py-3 bg-slate-800 text-slate-500 font-bold rounded-xl border border-slate-700 cursor-not-allowed transition-all duration-300 flex items-center justify-center gap-2 text-sm ml-auto";
+
+            // Update Progress Header
+            questionCategory.textContent = q.category;
+            currentQNum.textContent = currentQuestionIndex + 1;
+            currentScoreBadge.textContent = score;
+            
+            const progressPercent = ((currentQuestionIndex + 1) / quizQuestions.length) * 100;
+            progressBar.style.width = `${progressPercent}%`;
+
+            // Text Setup
+            questionText.textContent = q.question;
+            optionsContainer.innerHTML = '';
+
+            // Update Next Button Label if Last Question
+            if (currentQuestionIndex === quizQuestions.length - 1) {
+                btnNextText.textContent = "LIHAT HASIL KUIS";
+            } else {
+                btnNextText.textContent = "SOAL BERIKUTNYA";
+            }
+
+            // Render Options
+            const labels = ['A', 'B', 'C', 'D'];
+            q.options.forEach((opt, idx) => {
+                const btn = document.createElement('button');
+                btn.className = "option-btn glass-card-interactive w-full text-left p-4 rounded-xl flex items-start gap-3 border border-slate-700/70 text-slate-200 text-sm font-medium transition-all duration-200";
+                btn.onclick = () => selectOption(idx);
+                btn.id = `opt-${idx}`;
+
+                btn.innerHTML = `
+                    <span class="w-6 h-6 rounded-lg bg-slate-800 border border-slate-600 flex items-center justify-center text-xs font-bold text-tosca-bright shrink-0 mt-0.5">${labels[idx]}</span>
+                    <span class="leading-relaxed">${opt}</span>
+                `;
+                optionsContainer.appendChild(btn);
+            });
+
+            // Container Animation
+            const container = document.getElementById('questionContainer');
+            container.classList.remove('slide-up');
+            void container.offsetWidth; // Trigger reflow
+            container.classList.add('slide-up');
+        }
+
+        /* Handle Option Selection & Lock */
+        function selectOption(selectedIndex) {
+            // Check if already answered
+            if (userAnswers[currentQuestionIndex] !== undefined) return;
+
+            const q = quizQuestions[currentQuestionIndex];
+            const isCorrect = selectedIndex === q.correctIndex;
+
+            // Save user answer
+            userAnswers[currentQuestionIndex] = {
+                questionId: q.id,
+                selectedIndex: selectedIndex,
+                isCorrect: isCorrect
+            };
+
+            // Calculate Score
+            if (isCorrect) {
+                score += 10;
+                correctAnswersCount++;
+            } else {
+                wrongAnswersCount++;
+            }
+
+            currentScoreBadge.textContent = score;
+
+            // Highlight Option Buttons
+            for (let i = 0; i < q.options.length; i++) {
+                const btn = document.getElementById(`opt-${i}`);
+                btn.classList.remove('hover:border-tosca', 'glass-card-interactive');
+                btn.style.cursor = 'default';
+
+                if (i === q.correctIndex) {
+                    btn.classList.add('correct');
+                } else if (i === selectedIndex && !isCorrect) {
+                    btn.classList.add('wrong');
+                } else {
+                    btn.style.opacity = '0.4';
+                }
+            }
+
+            // Show Feedback Box
+            feedbackBox.classList.remove('hidden');
+            if (isCorrect) {
+                feedbackBox.className = "rounded-2xl p-4 sm:p-5 mb-6 border bg-emerald-950/40 border-emerald-500/50 text-emerald-200 slide-up";
+                feedbackIcon.className = "w-8 h-8 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0 mt-0.5 text-lg";
+                feedbackIcon.innerHTML = `<i class="fa-solid fa-circle-check"></i>`;
+                feedbackTitle.textContent = "Jawaban Tepat! (+10 Poin)";
+                feedbackTitle.className = "font-bold text-sm sm:text-base text-emerald-300 mb-1";
+            } else {
+                feedbackBox.className = "rounded-2xl p-4 sm:p-5 mb-6 border bg-rose-950/40 border-rose-500/50 text-rose-200 slide-up";
+                feedbackIcon.className = "w-8 h-8 rounded-xl bg-rose-500/20 text-rose-400 flex items-center justify-center shrink-0 mt-0.5 text-lg";
+                feedbackIcon.innerHTML = `<i class="fa-solid fa-circle-xmark"></i>`;
+                feedbackTitle.textContent = "Jawaban Belum Tepat";
+                feedbackTitle.className = "font-bold text-sm sm:text-base text-rose-300 mb-1";
+            }
+            feedbackText.textContent = q.explanation;
+
+            // Enable Next Button
+            btnNext.disabled = false;
+            btnNext.className = "w-full sm:w-auto px-8 py-3 bg-gradient-to-r from-tosca to-purpleAksen hover:from-tosca-bright hover:to-purpleAksen-bright text-white font-bold rounded-xl shadow-glow-tosca transition-all duration-300 flex items-center justify-center gap-2 text-sm ml-auto cursor-pointer transform hover:-translate-y-0.5";
+        }
+
+        /* Next Question / Finish Function */
+        function nextQuestion() {
+            if (currentQuestionIndex < quizQuestions.length - 1) {
+                currentQuestionIndex++;
+                renderQuestion();
+            } else {
+                showResults();
+            }
+        }
+
+        /* Show Final Results Page */
+        function showResults() {
+            quizPage.classList.add('hidden');
+            resultPage.classList.remove('hidden');
+
+            document.getElementById('resultName').textContent = participantName;
+            document.getElementById('finalScore').textContent = score;
+            document.getElementById('statCorrect').textContent = correctAnswersCount;
+            document.getElementById('statWrong').textContent = wrongAnswersCount;
+            
+            const accuracy = Math.round((correctAnswersCount / quizQuestions.length) * 100);
+            document.getElementById('statPercentage').textContent = `${accuracy}%`;
+
+            // Animate Score Bar
+            setTimeout(() => {
+                document.getElementById('resultScoreBar').style.width = `${score}%`;
+            }, 100);
+
+            // Motivation Message based on Score
+            const motivationText = document.getElementById('motivationText');
+            if (score >= 80) {
+                motivationText.textContent = "🎉 Luar Biasa! Pemahaman Anda sangat mendalam mengenai Manajemen & Digitalisasi Perpustakaan. Pertahankan prestasi ini!";
+                triggerConfetti();
+            } else if (score >= 60) {
+                motivationText.textContent = "👍 Hasil yang Bagus! Anda telah memahami konsep dasar dengan baik. Pelajari kembali materi modul untuk nilai sempurna.";
+            } else {
+                motivationText.textContent = "📚 Tetap Semangat! Tinjau kembali materi PDF kuliah terutama bagian DDC, DCMES, dan Google Sites untuk meningkatkan pemahaman Anda.";
+            }
+        }
+
+        /* Confetti Celebration Animation */
+        function triggerConfetti() {
+            if (typeof confetti === 'function') {
+                confetti({
+                    particleCount: 100,
+                    spread: 70,
+                    origin: { y: 0.6 },
+                    colors: ['#0D9488', '#14B8A6', '#7C3AED', '#8B5CF6', '#38BDF8']
+                });
+            }
+        }
+
+        /* Restart Quiz */
+        function restartQuiz() {
+            resultPage.classList.add('hidden');
+            startPage.classList.remove('hidden');
+            inputName.value = participantName; // keep user name filled
+        }
+
+        /* Modal Discussion Functions */
+        function openDiscussionModal() {
+            const listContainer = document.getElementById('discussionList');
+            listContainer.innerHTML = '';
+
+            const labels = ['A', 'B', 'C', 'D'];
+
+            quizQuestions.forEach((q, idx) => {
+                const userAns = userAnswers[idx];
+                const isCorrect = userAns ? userAns.isCorrect : false;
+                const userSelectedIdx = userAns ? userAns.selectedIndex : -1;
+
+                const card = document.createElement('div');
+                card.className = `p-4 sm:p-5 rounded-2xl border ${isCorrect ? 'bg-emerald-950/20 border-emerald-500/30' : 'bg-rose-950/20 border-rose-500/30'}`;
+
+                card.innerHTML = `
+                    <div class="flex items-center justify-between gap-2 mb-2">
+                        <span class="text-xs font-bold uppercase tracking-wider text-tosca-bright">${q.category}</span>
+                        <span class="text-xs font-bold px-2.5 py-0.5 rounded-full ${isCorrect ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40' : 'bg-rose-500/20 text-rose-300 border border-rose-500/40'}">
+                            ${isCorrect ? '<i class="fa-solid fa-check mr-1"></i> Benar (+10)' : '<i class="fa-solid fa-xmark mr-1"></i> Salah (0)'}
+                        </span>
+                    </div>
+                    <h5 class="text-sm font-bold text-white mb-3">${idx + 1}. ${q.question}</h5>
+                    
+                    <div class="space-y-1.5 mb-3 text-xs">
+                        <div class="p-2 rounded-lg ${userSelectedIdx === q.correctIndex ? 'bg-emerald-500/20 text-emerald-200 border border-emerald-500/40' : 'bg-slate-800/80 text-slate-300'}">
+                            <strong>Jawaban Anda:</strong> ${userSelectedIdx !== -1 ? labels[userSelectedIdx] + '. ' + q.options[userSelectedIdx] : 'Tidak dijawab'}
+                        </div>
+                        ${!isCorrect ? `
+                        <div class="p-2 rounded-lg bg-emerald-500/20 text-emerald-200 border border-emerald-500/40">
+                            <strong>Kunci Jawaban Benar:</strong> ${labels[q.correctIndex]}. ${q.options[q.correctIndex]}
+                        </div>` : ''}
+                    </div>
+
+                    <div class="text-xs text-slate-300 bg-navy/80 p-3 rounded-xl border border-slate-700/60 leading-relaxed">
+                        <strong class="text-tosca-bright"><i class="fa-solid fa-circle-info mr-1"></i> Pembahasan:</strong> ${q.explanation}
+                    </div>
+                `;
+
+                listContainer.appendChild(card);
+            });
+
+            document.getElementById('discussionModal').classList.remove('hidden');
+        }
+
+        function closeDiscussionModal() {
+            document.getElementById('discussionModal').classList.add('hidden');
+        }
+    </script>
+</body>
+</html>
